@@ -124,9 +124,22 @@ const loadData = async () => {
   loading.value = true
   try {
     const res = await request.get('/threshold/list')
-    // 适配后端 res.data[0].thresholdList 或直接 res 结构
-    const rawList = (res?.data && res.data[0]?.thresholdList) || res || []
+    console.log('Threshold API Response:', res)
     
+    // 适配逻辑修复：
+    // 根据拦截器，res 已经是 data 数组: [{ groupName: "1", thresholdList: [...] }]
+    let rawList = []
+    if (Array.isArray(res)) {
+      // 如果 res 是数组，取第一项的 thresholdList
+      rawList = res[0]?.thresholdList || []
+    } else if (res?.thresholdList) {
+      // 兼容直接返回对象的情况
+      rawList = res.thresholdList
+    } else if (res?.data && Array.isArray(res.data)) {
+      // 兼容未被拦截器解构的情况
+      rawList = res.data[0]?.thresholdList || []
+    }
+
     // 清空现有数据
     configs.frequency = []
     configs.ddos = []
@@ -135,7 +148,7 @@ const loadData = async () => {
     rawList.forEach(item => {
       const formattedItem = {
         ...item,
-        thresholdValue: Number(item.thresholdValue),
+        thresholdValue: Number(item.thresholdValue) || 0,
         loading: false
       }
 
@@ -151,10 +164,10 @@ const loadData = async () => {
     // 组内排序逻辑：窗口时间置顶 -> 高 -> 中 -> 低
     const order = ['_time', '_high', '_middle', '_low', 'ddos_threshold']
     const sortFn = (a, b) => {
-      let aIdx = order.findIndex(o => a.configKey.endsWith(o))
-      let bIdx = order.findIndex(o => b.configKey.endsWith(o))
-      if (a.configKey === 'ddos_threshold') aIdx = 4
-      if (b.configKey === 'ddos_threshold') bIdx = 4
+      let aKey = a.configKey
+      let bKey = b.configKey
+      let aIdx = order.findIndex(o => aKey.includes(o))
+      let bIdx = order.findIndex(o => bKey.includes(o))
       return aIdx - bIdx
     }
     configs.frequency.sort(sortFn)

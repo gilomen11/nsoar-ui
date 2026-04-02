@@ -50,6 +50,16 @@ const routes = [
         path: 'list/domainBlack',
         name: 'DomainBlack',
         component: () => import('@/views/ListManage/DomainBlackList.vue')
+      },
+      {
+        path: 'risk/alertRecord',
+        name: 'AlertRecord',
+        component: () => import('@/views/RiskManage/AlertRecord.vue')
+      },
+      {
+        path: 'risk/blackWhiteList',
+        name: 'BlackWhiteList',
+        component: () => import('@/views/RiskManage/BlackWhiteList.vue')
       }
     ]
   }
