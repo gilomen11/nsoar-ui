@@ -12,32 +12,32 @@
         :collapse="isCollapse"
         router
       >
-        <el-menu-item index="/user">
-          <el-icon><user /></el-icon>
-          <template #title>用户管理</template>
-        </el-menu-item>
-        <el-menu-item index="/role">
-          <el-icon><setting /></el-icon>
-          <template #title>角色管理</template>
-        </el-menu-item>
-        <el-sub-menu index="/config">
-          <template #title>
-            <el-icon><tools /></el-icon>
-            <span>系统配置</span>
-          </template>
-          <el-menu-item index="/config/system">参数设置</el-menu-item>
-          <el-menu-item index="/config/threshold">阈值设置</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="/list">
-          <template #title>
-            <el-icon><list /></el-icon>
-            <span>名单管理</span>
-          </template>
-          <el-menu-item index="/list/ipWhite">IP白名单</el-menu-item>
-          <el-menu-item index="/list/ipBlack">IP黑名单</el-menu-item>
-          <el-menu-item index="/list/domainWhite">域名白名单</el-menu-item>
-          <el-menu-item index="/list/domainBlack">域名黑名单</el-menu-item>
-        </el-sub-menu>
+        <template v-for="item in userStore.menus" :key="item.path">
+          <!-- 父菜单，有子节点 -->
+          <el-sub-menu v-if="item.children && item.children.length > 0" :index="item.path">
+            <template #title>
+              <el-icon>
+                <component :is="getIcon(item.path)" />
+              </el-icon>
+              <span>{{ item.name }}</span>
+            </template>
+            <el-menu-item 
+              v-for="sub in item.children" 
+              :key="sub.path" 
+              :index="sub.path"
+            >
+              {{ sub.name }}
+            </el-menu-item>
+          </el-sub-menu>
+          
+          <!-- 一级菜单，无子节点 -->
+          <el-menu-item v-else :index="item.path">
+            <el-icon>
+              <component :is="getIcon(item.path)" />
+            </el-icon>
+            <template #title>{{ item.name }}</template>
+          </el-menu-item>
+        </template>
       </el-menu>
     </el-aside>
     <el-container>
@@ -64,8 +64,17 @@ import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import {
-  User, Setting, Tools, List, Fold, Expand
+  User, Setting, Tools, List, Fold, Expand, Menu
 } from '@element-plus/icons-vue'
+
+const getIcon = (path) => {
+  if (!path) return 'Menu'
+  if (path.includes('/user')) return 'User'
+  if (path.includes('/role')) return 'Setting'
+  if (path.includes('/config')) return 'Tools'
+  if (path.includes('/list')) return 'List'
+  return 'Menu'
+}
 
 const isCollapse = ref(false)
 const route = useRoute()

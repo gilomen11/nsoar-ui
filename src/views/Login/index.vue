@@ -106,11 +106,20 @@ const handleLogin = () => {
       if (token) {
         userStore.setToken(token)
         // 存储更多用户信息
-        userStore.userInfo = {
+        userStore.setUserInfo({
           username: res.username,
           nickname: res.nickname,
           roleId: res.roleId
+        })
+        
+        // 根据 roleId 获取该角色的权限菜单目录结构并保存
+        try {
+          const menuRes = await request.post('/authorityTree/list', { roleId: res.roleId })
+          userStore.setMenus(menuRes || [])
+        } catch (menuErr) {
+          ElMessage.error('获取权限菜单失败')
         }
+
         ElMessage.success('登录成功')
         router.push('/')
       } else {
