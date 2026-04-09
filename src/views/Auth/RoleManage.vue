@@ -44,11 +44,12 @@
     <!-- 分配权限树 -->
     <el-dialog title="分配权限" v-model="assignVisible" width="500px">
       <el-tree
+        v-if="assignVisible"
         ref="treeRef"
         :data="menuList"
         show-checkbox
-        node-key="id"
-        :props="{ label: 'menuName', children: 'children' }"
+        node-key="path"
+        :props="{ label: 'name', children: 'children' }"
         :default-checked-keys="checkedKeys"
       />
       <template #footer>
@@ -116,20 +117,35 @@ const handleDelete = (row) => {
   })
 }
 
-const fetchMenuTree = async () => {
+const fetchMenuTree = async (roleId) => {
   try {
-    const res = await request.post('/authorityTree/list', {})
-    menuList.value = res || []
+    // 携带 roleId 发起请求（同时传入 body 和 params 以兼容不同后端接收方式）
+    const res = await request.post('/authorityTree/list', { roleId }, { params: { roleId } })
+    let data = res
+    if (res && !Array.isArray(res)) {
+      data = res.data || res.list || []
+    }
+    menuList.value = Array.isArray(data) ? data : []
   } catch(e){}
 }
 
 const handleAssign = async (row) => {
   currentRoleId.value = row.roleId
   assignVisible.value = true
-  // get existing role menu ids
+  
+  // 清空旧数据防止闪烁
+  menuList.value = []
+  checkedKeys.value = []
+  
+  // 获取当前角色的权限树及已选菜单
   try {
+    await fetchMenuTree(row.roleId)
     const res = await request.get(`/role/listRoleMenuIds?roleId=${row.roleId}`)
-    checkedKeys.value = res || []
+    let keys = res
+    if (res && !Array.isArray(res)) {
+      keys = res.data || res.menuIds || res.list || []
+    }
+    checkedKeys.value = Array.isArray(keys) ? keys : []
   } catch(e){}
 }
 
@@ -145,6 +161,5 @@ const submitAssign = async () => {
 
 onMounted(() => {
   fetchData()
-  fetchMenuTree()
 })
 </script>
