@@ -9,8 +9,13 @@ const routes = [
   {
     path: '/',
     component: () => import('@/layout/index.vue'),
-    redirect: '/user',
+    redirect: '/dashboard',
     children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: () => import('@/views/Dashboard/index.vue')
+      },
       {
         path: 'user',
         name: 'UserManage',
@@ -60,6 +65,11 @@ const routes = [
         path: 'risk/blackWhiteList',
         name: 'BlackWhiteList',
         component: () => import('@/views/RiskManage/BlackWhiteList.vue')
+      },
+      {
+        path: 'risk/reportManage',
+        name: 'ReportManage',
+        component: () => import('@/views/RiskManage/ReportManage.vue')
       }
     ]
   }
