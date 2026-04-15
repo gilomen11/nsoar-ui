@@ -29,14 +29,21 @@
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column prop="id" label="ID" width="80" align="center" />
         <el-table-column prop="ip" label="来访IP" width="130" />
+        <el-table-column prop="requestPath" label="访问路径" show-overflow-tooltip min-width="150" />
+        <el-table-column prop="frequency" label="频次" width="80" align="center" />
         <el-table-column prop="riskLevel" label="风险等级" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="getRiskLevelType(row.riskLevel)">{{ row.riskLevel }}</el-tag>
+            <el-tag :type="getRiskLevelType(row.riskLevel)">{{ getRiskLevelLabel(row.riskLevel) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="triggerReason" label="触发原因" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="告警时间" width="180" align="center" />
-        <el-table-column label="操作" width="150" align="center">
+        <el-table-column prop="triggerReason" label="触发原因" show-overflow-tooltip min-width="150" />
+        <el-table-column prop="userAgent" label="UserAgent" show-overflow-tooltip min-width="150" />
+        <el-table-column label="告警时间" width="180" align="center">
+          <template #default="{ row }">
+            {{ parseTime(row.createTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120" align="center" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="handleEdit(row)">编辑</el-button>
             <el-button size="small" type="danger" link @click="handleDelete(row)">删除</el-button>
@@ -60,7 +67,13 @@
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px">
       <el-form :model="form" ref="formRef" :rules="rules" label-width="100px">
         <el-form-item label="IP地址" prop="ip">
-          <el-input v-model="form.ip" />
+          <el-input v-model="form.ip" placeholder="请输入IP地址" />
+        </el-form-item>
+        <el-form-item label="访问路径" prop="requestPath">
+          <el-input v-model="form.requestPath" placeholder="例如: /api/login" />
+        </el-form-item>
+        <el-form-item label="访问频次" prop="frequency">
+          <el-input-number v-model="form.frequency" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="风险等级" prop="riskLevel">
           <el-select v-model="form.riskLevel" style="width: 100%">
@@ -71,7 +84,13 @@
           </el-select>
         </el-form-item>
         <el-form-item label="触发原因" prop="triggerReason">
-          <el-input v-model="form.triggerReason" type="textarea" :rows="3" />
+          <el-input v-model="form.triggerReason" placeholder="请输入触发原因" />
+        </el-form-item>
+        <el-form-item label="UserAgent" prop="userAgent">
+          <el-input v-model="form.userAgent" type="textarea" :rows="2" placeholder="浏览器标识" />
+        </el-form-item>
+        <el-form-item label="详细内容" prop="content">
+          <el-input v-model="form.content" type="textarea" :rows="4" placeholder="告警Payload详情" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -118,16 +137,43 @@ const selectedRows = ref([])
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
-const form = reactive({ id: null, ip: '', riskLevel: 'LOW', triggerReason: '' })
+const form = reactive({
+  id: null,
+  ip: '',
+  requestPath: '',
+  frequency: 1,
+  riskLevel: 'LOW',
+  triggerReason: '',
+  userAgent: '',
+  content: ''
+})
 const formRef = ref(null)
 const rules = {
   ip: [{ required: true, message: '请输入IP地址', trigger: 'blur' }],
+  requestPath: [{ required: true, message: '请输入访问路径', trigger: 'blur' }],
   riskLevel: [{ required: true, message: '请选择风险等级', trigger: 'change' }]
 }
 
 const getRiskLevelType = (level) => {
   const map = { LOW: 'info', MEDIUM: 'warning', HIGH: 'danger', CRITICAL: 'danger' }
   return map[level] || 'info'
+}
+
+const getRiskLevelLabel = (level) => {
+  const map = { LOW: '低危', MEDIUM: '中危', HIGH: '高危', CRITICAL: '严重' }
+  return map[level] || level
+}
+
+const parseTime = (time) => {
+  if (!time) return ''
+  const date = new Date(time)
+  const y = date.getFullYear()
+  const m = (date.getMonth() + 1).toString().padStart(2, '0')
+  const d = date.getDate().toString().padStart(2, '0')
+  const h = date.getHours().toString().padStart(2, '0')
+  const i = date.getMinutes().toString().padStart(2, '0')
+  const s = date.getSeconds().toString().padStart(2, '0')
+  return `${y}-${m}-${d} ${h}:${i}:${s}`
 }
 
 const fetchData = async () => {
@@ -148,7 +194,16 @@ const handleSelectionChange = (val) => {
 
 const handleAdd = () => {
   dialogTitle.value = '新增模拟告警'
-  Object.assign(form, { id: null, ip: '', riskLevel: 'LOW', triggerReason: '' })
+  Object.assign(form, {
+    id: null,
+    ip: '',
+    requestPath: '',
+    frequency: 1,
+    riskLevel: 'LOW',
+    triggerReason: '',
+    userAgent: '',
+    content: ''
+  })
   if (formRef.value) formRef.value.clearValidate()
   dialogVisible.value = true
 }
@@ -172,12 +227,12 @@ const submitForm = () => {
   })
 }
 
-// 注意这里使用 params 参数处理 @RequestParam List<Integer> ids
+// 注意这里显式处理参数序列化，确保 ids=1&ids=2 格式
 const doDelete = async (ids) => {
   try {
-    await request.delete(`${targetApi}/removeByIdsList`, {
-      params: { ids: ids.join(',') }
-    })
+    const params = new URLSearchParams()
+    ids.forEach(id => params.append('ids', id))
+    await request.delete(`${targetApi}/removeByIdsList`, { params })
     ElMessage.success('删除成功')
     fetchData()
   } catch (e) {}

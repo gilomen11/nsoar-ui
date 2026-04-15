@@ -17,8 +17,16 @@
             <el-tag :type="scope.row.enable === 1 ? 'success' : 'info'">{{ scope.row.enable === 1 ? '启用' : '停用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180" />
-        <el-table-column prop="updateTime" label="更新时间" width="180" />
+        <el-table-column label="创建时间" width="180">
+          <template #default="scope">
+            {{ formatDateArray(scope.row.createTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="更新时间" width="180">
+          <template #default="scope">
+            {{ formatDateArray(scope.row.updateTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="150" align="center">
           <template #default="scope">
             <el-button size="small" type="primary" link @click="handleEdit(scope.row)">编辑</el-button>
@@ -62,6 +70,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
+import { formatDateArray } from '@/utils/format'
 
 const targetApi = '/whiteDomain'
 
