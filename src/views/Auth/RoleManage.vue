@@ -17,8 +17,16 @@
       <el-table :data="tableData" v-loading="loading" border style="width: 100%; margin-top: 15px;">
         <el-table-column prop="roleId" label="ID" width="80" align="center" />
         <el-table-column prop="roleName" label="角色名称" />
-        <el-table-column prop="createTime" label="创建时间" width="200" align="center" />
-        <el-table-column prop="updateTime" label="更新时间" width="200" align="center" />
+        <el-table-column prop="createTime" label="创建时间" width="200" align="center">
+          <template #default="scope">
+            {{ formatDateArray(scope.row.createTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" width="200" align="center">
+          <template #default="scope">
+            {{ formatDateArray(scope.row.updateTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="230" align="center">
           <template #default="scope">
             <el-button size="small" type="success" link @click="handleAssign(scope.row)">分配权限</el-button>
@@ -78,6 +86,7 @@
 import { ref, reactive, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
+import { formatDateArray } from '@/utils/format'
 
 // ==================== 列表相关 ====================
 const queryParams = reactive({ current: 1, pageSize: 10, roleName: '' })

@@ -27,7 +27,11 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="expiredTime" label="过期时间" width="180" />
+        <el-table-column prop="expiredTime" label="过期时间" width="180">
+          <template #default="scope">
+            {{ formatDateArray(scope.row.expiredTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200" align="center">
           <template #default="scope">
             <el-button size="small" type="primary" link @click="handleEdit(scope.row)">编辑</el-button>
@@ -83,6 +87,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
+import { formatDateArray } from '@/utils/format'
 
 const queryParams = reactive({ 
   current: 1, 

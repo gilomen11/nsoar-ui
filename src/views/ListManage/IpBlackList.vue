@@ -40,7 +40,11 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="updateTime" label="更新时间" width="175" />
+        <el-table-column prop="updateTime" label="更新时间" width="175">
+          <template #default="scope">
+            {{ formatDateArray(scope.row.updateTime) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="130" align="center" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" link @click="handleEdit(scope.row)">编辑</el-button>
@@ -126,6 +130,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
+import { formatDateArray } from '@/utils/format'
 
 const targetApi = '/ipBlack'
 
