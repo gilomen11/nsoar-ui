@@ -11,8 +11,14 @@
       <el-table :data="tableData" @selection-change="handleSelectionChange" v-loading="loading" border style="width: 100%; margin-top: 15px;">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column prop="domainName" label="域名" />
-        <el-table-column prop="remark" label="备注" />
+        <el-table-column prop="description" label="描述" />
+        <el-table-column prop="enable" label="状态" width="100" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.enable === 1 ? 'success' : 'info'">{{ scope.row.enable === 1 ? '启用' : '停用' }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="180" />
+        <el-table-column prop="updateTime" label="更新时间" width="180" />
         <el-table-column label="操作" width="150" align="center">
           <template #default="scope">
             <el-button size="small" type="primary" link @click="handleEdit(scope.row)">编辑</el-button>
@@ -37,8 +43,11 @@
         <el-form-item label="域名" prop="domainName">
           <el-input v-model="form.domainName" />
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" />
+        <el-form-item label="描述" prop="description">
+          <el-input v-model="form.description" type="textarea" />
+        </el-form-item>
+        <el-form-item label="状态" prop="enable">
+          <el-switch v-model="form.enable" :active-value="1" :inactive-value="0" active-text="启用" inactive-text="停用" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -64,7 +73,7 @@ const selectedRows = ref([])
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
-const form = reactive({ id: null, domainName: '', remark: '' })
+const form = reactive({ id: null, domainName: '', description: '', enable: 1 })
 const formRef = ref(null)
 const rules = { domainName: [{ required: true, message: '必填项', trigger: 'blur' }] }
 
@@ -81,7 +90,7 @@ const handleSelectionChange = (val) => { selectedRows.value = val }
 
 const handleAdd = () => {
   dialogTitle.value = '新增域名白名单'
-  Object.assign(form, { id: null, domainName: '', remark: '' })
+  Object.assign(form, { id: null, domainName: '', description: '', enable: 1 })
   dialogVisible.value = true
 }
 
