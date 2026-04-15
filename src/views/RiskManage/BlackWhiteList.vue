@@ -5,7 +5,7 @@
         <el-input v-model="queryParams.ip" placeholder="IP地址" clearable style="width: 150px" />
         <el-select v-model="queryParams.type" placeholder="名单类型" clearable style="width: 120px">
           <el-option label="白名单" :value="1" />
-          <el-option label="黑名单" :value="2" />
+          <el-option label="黑名单" :value="0" />
         </el-select>
         <el-select v-model="queryParams.riskLevel" placeholder="风险等级" clearable style="width: 120px">
           <el-option label="低危" value="LOW" />
@@ -32,11 +32,15 @@
           </template>
         </el-table-column>
         <el-table-column prop="riskLevel" label="最高风险" width="100" align="center" />
-        <el-table-column prop="remark" label="封禁/白名单原因" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="录入时间" width="160" align="center" />
-        <el-table-column prop="expireTime" label="过期时间" width="160" align="center">
+        <el-table-column prop="tags" label="原因标签" show-overflow-tooltip />
+        <el-table-column prop="createTime" label="录入时间" width="170" align="center">
           <template #default="{ row }">
-            {{ row.expireTime || '永久' }}
+            {{ parseTime(row.createTime) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" width="170" align="center">
+          <template #default="{ row }">
+            {{ parseTime(row.updateTime) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="150" align="center">
@@ -68,11 +72,19 @@
         <el-form-item label="策略类型" prop="type">
           <el-radio-group v-model="form.type">
             <el-radio :label="1">白名单</el-radio>
-            <el-radio :label="2">黑名单</el-radio>
+            <el-radio :label="0">黑名单</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="限制原因" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" />
+        <el-form-item label="风险等级" prop="riskLevel">
+          <el-select v-model="form.riskLevel" placeholder="选择风险等级" style="width: 100%">
+            <el-option label="低危" value="LOW" />
+            <el-option label="中危" value="MEDIUM" />
+            <el-option label="高危" value="HIGH" />
+            <el-option label="严重" value="CRITICAL" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="限制原因" prop="tags">
+          <el-input v-model="form.tags" type="textarea" :rows="3" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -88,6 +100,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/utils/request'
 import axios from 'axios'
+import { parseTime } from '@/utils/format'
 
 const targetApi = '/blackWhiteList'
 
@@ -106,11 +119,12 @@ const selectedRows = ref([])
 
 const dialogVisible = ref(false)
 const dialogTitle = ref('')
-const form = reactive({ id: null, ip: '', type: 2, remark: '' })
+const form = reactive({ id: null, ip: '', type: 0, riskLevel: 'LOW', tags: '' })
 const formRef = ref(null)
 const rules = {
   ip: [{ required: true, message: '请输入受控IP', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择策略类型', trigger: 'change' }]
+  type: [{ required: true, message: '请选择策略类型', trigger: 'change' }],
+  riskLevel: [{ required: true, message: '请选择风险等级', trigger: 'change' }]
 }
 
 const fetchData = async () => {
@@ -131,7 +145,7 @@ const handleSelectionChange = (val) => {
 
 const handleAdd = () => {
   dialogTitle.value = '新增管控策略'
-  Object.assign(form, { id: null, ip: '', type: 2, remark: '' })
+  Object.assign(form, { id: null, ip: '', type: 0, riskLevel: 'LOW', tags: '' })
   if (formRef.value) formRef.value.clearValidate()
   dialogVisible.value = true
 }
