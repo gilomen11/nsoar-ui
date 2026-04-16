@@ -56,8 +56,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import * as echarts from 'echarts';
 
 // ==== 如果你需要真实地图配置，需要在项目中引入 JSON 并解开以下注释 ====
-// 引入世界地图 JSON 文件示例 (需要你去下载数据文件到对应目录)
-// import worldJson from '@/assets/world.json'; 
+import chinaJson from '@/assets/china.json';
 
 // === 状态与引用 ===
 const chartARef = ref(null);
@@ -225,43 +224,45 @@ const initChartC = () => {
 const initMap = () => {
     chartMap = echarts.init(mapRef.value);
     
-    // ======== 重要说明：如果有下载好的地图 JSON ========
-    // 假设您下载了 ECharts 可用的 echarts.registerMap('world', worldJson); 
-    // 将此处下方代码的 coordinateSystem 从 'cartesian2d' 修改为 'geo' 即可。
-    // =================================================
+    // 注册地图
+    echarts.registerMap('china', chinaJson);
 
+    // 初始模拟散点（中国范围：经度80-120，纬度20-45）
     const mockScatterData = [
-        {name: 'Node A', value: [116.46, 39.92, 150]},
-        {name: 'Node B', value: [104.19, 35.86, 60]},
-        {name: 'Node C', value: [-74.00, 40.71, 90]},
-        {name: 'Node D', value: [-0.12, 51.50, 110]},
-        {name: 'Node E', value: [37.61, 55.75, 80]},
-        {name: 'Node F', value: [139.69, 35.68, 130]},
-        {name: 'Node G', value: [151.20, -33.86, 40]}
+        {name: '北京', value: [116.40, 39.90, 150]},
+        {name: '上海', value: [121.47, 31.23, 120]},
+        {name: '广州', value: [113.26, 23.12, 110]},
+        {name: '成都', value: [104.06, 30.67, 90]},
+        {name: '西安', value: [108.94, 34.27, 80]},
+        {name: '武汉', value: [114.30, 30.59, 100]},
+        {name: '乌鲁木齐', value: [87.61, 43.82, 60]}
     ];
 
     const option = {
         backgroundColor: 'transparent',
         tooltip: { trigger: 'item', formatter: '{b}<br/>攻击热度：{c}' },
         
-        // --- 解开这里可以显示真实背景地图 ---
-        // geo: {
-        //   map: 'world', // 或 'china'
-        //   roam: true, // 允许鼠标缩放平移
-        //   itemStyle: { areaColor: '#071638', borderColor: '#165798', borderWidth: 1 },
-        //   emphasis: { itemStyle: { areaColor: '#123773' }, label: { show: false } }
-        // },
-
-        // 因为没有外挂 JSON，这里用一个纯二维隐形坐标系打底防止运行抛错
-        xAxis: { show: false, min: -180, max: 180 }, 
-        yAxis: { show: false, min: -90, max: 90 },
+        geo: {
+          map: 'china',
+          roam: true, // 允许鼠标缩放平移
+          emphasis: {
+            itemStyle: { areaColor: '#123773' },
+            label: { show: false }
+          },
+          itemStyle: {
+            areaColor: '#071638',
+            borderColor: '#165798',
+            borderWidth: 1.5,
+            shadowColor: 'rgba(0, 242, 254, 0.3)',
+            shadowBlur: 10
+          }
+        },
 
         series: [
             {
                 name: '攻击源追踪',
                 type: 'effectScatter',
-                // coordinateSystem: 'geo', // 如果地图可用，则使用这个
-                coordinateSystem: 'cartesian2d', 
+                coordinateSystem: 'geo', 
                 symbolSize: function (val) {
                     return val[2] / 6; // 热度值映射涟漪波及大小
                 },
@@ -336,9 +337,9 @@ const updateMockData = () => {
          chartMap.setOption({
             series: [{
                 data: Array.from({length: 8}).map((_, i) => ({
-                    name: `Malicious Target ${i}`,
-                    // 随机散落在大部分版块经纬度
-                    value: [(Math.random() * 300) - 150, (Math.random() * 140) - 70, Math.floor(Math.random() * 150 + 40)]
+                    name: `攻击点 ${i}`,
+                    // 随机散落在我国大部分版块经纬度（经度约80-120，纬度约20-45）
+                    value: [(Math.random() * 40 + 80), (Math.random() * 25 + 20), Math.floor(Math.random() * 150 + 40)]
                 }))
             }]
          });
